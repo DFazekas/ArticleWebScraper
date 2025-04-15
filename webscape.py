@@ -2,6 +2,34 @@ import requests
 from bs4 import BeautifulSoup
 from datetime import datetime
 
+
+class Article:
+  def __init__(self, title, link, date):
+    """
+    Initializes an Article instance.
+    
+    Args:
+        title (str): The title of the article.
+        link (str): The URL link to the article.
+        date (datetime): The publication date of the article.
+    """
+    self.title = title
+    self.link = link
+    self.date = date # Expected to be a naive datetime
+    
+  def to_dict(self):
+    """
+    Returns a dictionary representation of the article with formatted date.
+    """
+    return {
+      "title": self.title,
+      "link": self.link,
+      "date": self.date.strftime("%Y-%m-%d")
+    }
+    
+  def __repr__(self):
+    return f"Article(title='{self.title}', link='{self.link}', date='{self.date.strftime('%Y-%m-%d')}')"
+
 # ------------------ HELPER FUNCTIONS ------------------
 
 def fetch_html(url):
@@ -24,27 +52,23 @@ def fetch_html(url):
 
 def filter_articles(articles, threshold_date):
     """
-    Filters a list of article dictionaries.
-    Each article should have a 'date' key containing a datetime object.
-    Returns a new list with articles that meet or exceed the threshold date;
-    the dates are formatted as strings in the output.
+    Filters a list of Article objects.
+    Returns a new list with articles whose publication date is on or after threshold_date.
     """
-    return [
-        {**article, "date": article["date"].strftime("%Y-%m-%d")}
-        for article in articles if article["date"] >= threshold_date
-    ]
+    return [article for article in articles if article.date >= threshold_date]
 
 def save_articles(articles, output_filename):
     """
-    Writes a list of article dictionaries (keys: 'title', 'date', 'link')
+    Writes a list of Article objects (using their dictionary representation)
     to a file.
     """
     try:
         with open(output_filename, "w", encoding="utf-8") as f:
             for art in articles:
-                f.write(f"Title: {art['title']}\n")
-                f.write(f"Date:  {art['date']}\n")
-                f.write(f"Link:  {art['link']}\n")
+                art_dict = art.to_dict()
+                f.write(f"Title: {art_dict['title']}\n")
+                f.write(f"Date:  {art_dict['date']}\n")
+                f.write(f"Link:  {art_dict['link']}\n")
                 f.write("-" * 40 + "\n")
         print(f"Saved {len(articles)} articles to '{output_filename}'.")
     except IOError as e:
@@ -54,11 +78,8 @@ def save_articles(articles, output_filename):
 
 def parse_betakit_article(article_elem):
     """
-    Parses a BetaKit article.
-    
-    Returns:
-        dict: A dictionary with keys "title", "link", and "date" (a datetime object).
-              Returns None if required fields cannot be extracted.
+    Parses a BetaKit article and returns an Article instance.
+    Returns None if required fields cannot be extracted.
     """
     
     # Parse publication date from the article.
@@ -83,15 +104,12 @@ def parse_betakit_article(article_elem):
     else:
         title, link = "No Title", ""
 
-    return {"title": title, "link": link, "date": art_date}
+    return Article(title, link, art_date)
 
 def parse_finsmes_article(article_elem):
     """
-    Parses a FinSMEs article 
-    
-    Returns:
-        dict: A dictionary with keys "title", "link", and "date" (a datetime object).
-              Returns None if required fields cannot be extracted.
+    Parses a FinSMEs article and returns an Article instance.
+    Returns None if required fields cannot be extracted. 
     """
     if article_elem is None:
         return None
@@ -126,15 +144,15 @@ def parse_finsmes_article(article_elem):
     else:
         title, link = "No Title", ""
 
-    return {"title": title, "link": link, "date": art_date}
+    return Article(title, link, art_date)
 
 
 # ------------------ SITE-SPECIFIC SCRAPER FUNCTIONS ------------------
 
 def scrape_betakit(url, threshold_date):
     """
-    Scrapes Betakit's "latest" section for articles whose dates are on or after threshold_date.
-    Returns a list of parsed article dictionaries.
+    Scrapes Betakit articles from the specified URL.
+    Returns a list of Article instances meeting the threshold_date.
     """
     html = fetch_html(url)
     if html is None:
@@ -147,10 +165,8 @@ def scrape_betakit(url, threshold_date):
     if not article_containers:
         print("Betakit: 'Latest' section not found.")
         return []
+    
     articles = article_containers.find_all("article")
-    if not articles:
-        print("Betakit: No articles found.")
-        return []
     
     # Parse each article.
     parsed_articles = [
@@ -170,9 +186,8 @@ def scrape_betakit(url, threshold_date):
 
 def scrape_finsmes(url, threshold_date):
     """
-    Scrapes Finsmes articles from the specified URL using the "td-cpt-post" class.
-    Returns a list of parsed article dictionaries (with keys: 'title', 'link', 'date')
-    meeting the provided threshold_date.
+    Scrapes FinSMEs articles from the specified URL.
+    Returns a list of Article instances meeting the threshold_date.
     """
     html = fetch_html(url)
     if html is None:
@@ -182,9 +197,6 @@ def scrape_finsmes(url, threshold_date):
     
     # Find all articles.
     articles = soup.find_all("div", class_="td-cpt-post")
-    if not articles:
-        print("FinSMEs: 'Articles' section not found.")
-        return []
     
     # Parse each article.
     parsed_articles = [
