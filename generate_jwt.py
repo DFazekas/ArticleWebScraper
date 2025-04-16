@@ -1,7 +1,10 @@
-import jwt
+"""
+Module for generating a JWT token based on service account credentials.
+"""
+
 import json
 import time
-import os
+import jwt
 
 # Path to your downloaded service account JSON key file.
 SERVICE_ACCOUNT_FILE = 'service_account_file.json'
@@ -16,13 +19,13 @@ SCOPES = "https://www.googleapis.com/auth/spreadsheets"
 def generate_jwt(output_filename="jwt.txt"):
     """
     Generates a JWT token based on the service account credentials and saves it to a file.
-    
+
     Args:
         output_filename (str): Path to the file where the JWT token will be saved.
-        
+
     Returns:
         str: The generated JWT token.
-    
+
     Raises:
         IOError: If an error occurs while reading the service account file or writing the JWT file.
     """
@@ -31,8 +34,8 @@ def generate_jwt(output_filename="jwt.txt"):
         with open(SERVICE_ACCOUNT_FILE, 'r', encoding="utf-8") as f:
             service_account_info = json.load(f)
     except Exception as e:
-        raise IOError(f"Error reading service account file: {e}")
-    
+        raise IOError(f"Error reading service account file: {e}") from e
+
     # Extract the necessary information from your service account.
     private_key = service_account_info['private_key']
     client_email = service_account_info['client_email']
@@ -60,15 +63,17 @@ def generate_jwt(output_filename="jwt.txt"):
             f.write(jwt_token)
         print(f"Saved JWT in file: {output_filename}.")
     except IOError as e:
-        raise IOError(f"Error writing to file {output_filename}: {e}")
+        raise IOError(f"Error writing to file {output_filename}: {e}") from e
 
     return jwt_token
+
 
 def main():
     """
     Command-line entry point for generating the JWT token.
     """
     generate_jwt()
+
 
 if __name__ == "__main__":
     main()
