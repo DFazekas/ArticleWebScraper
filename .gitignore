@@ -1,1 +1,4 @@
 articles.txt
+jwt.txt
+*.json
+__pycache__

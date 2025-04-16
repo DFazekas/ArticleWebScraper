@@ -1,3 +1,4 @@
+import sys
 import requests
 from bs4 import BeautifulSoup
 from datetime import datetime
@@ -172,13 +173,22 @@ def save_articles(articles, output_filename):
     except IOError as e:
         print("Error writing to file:", e)
 
+def run_scraper(threshold_date_str, output_filename="articles.txt"):
+    """
+    Runs all scrapers using the given threshold date (YYYY-MM-DD) and saves the articles.
+    
+    Args:
+        threshold_date_str (str): The threshold date in 'YYYY-MM-DD' format.
+        output_filename (str): The file to write the scraped articles.
+    
+    Returns:
+        list: A list of Article objects that were saved.
+    """
+    try:
+        threshold_date = datetime.strptime(threshold_date_str, "%Y-%m-%d")
+    except ValueError:
+        raise ValueError("Invalid date format. Please use YYYY-MM-DD.")
 
-if __name__ == "__main__":
-    # Only fetch articles on or after this date
-    given_date = "2025-04-10"
-    threshold_date = datetime.strptime(given_date, "%Y-%m-%d")
-
-    # Initialize each website's scraper class
     scrapers = [
         BetaKitScraper("https://betakit.com/"),
         FinSMEsScraper("https://www.finsmes.com/category/canada")
@@ -189,4 +199,14 @@ if __name__ == "__main__":
         articles = scraper.scrape(threshold_date)
         all_articles.extend(articles)
 
-    save_articles(all_articles, "articles.txt")
+    save_articles(all_articles, output_filename)
+    return all_articles
+
+
+if __name__ == "__main__":
+    if len(sys.argv) < 2:
+        print("Usage: python 'article_scraper.py' <threshold_date (YYYY-MM-DD)>")
+        sys.exit(1)
+
+    threshold_str = sys.argv[1]
+    run_scraper(threshold_str)
