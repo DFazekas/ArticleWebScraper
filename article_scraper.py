@@ -35,7 +35,11 @@ class Article:
         }
 
     def __repr__(self):
-        return f"Article(title='{self.title}', link='{self.link}', date='{self.date.strftime('%Y-%m-%d')}')"
+        return (
+        f"Article(title='{self.title}', "
+        f"link='{self.link}', "
+        f"date='{self.date.strftime('%Y-%m-%d')}')"
+    )
 
 
 class BaseScraper(abc.ABC):
