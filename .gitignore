@@ -2,3 +2,4 @@ articles.txt
 jwt.txt
 *.json
 __pycache__
+.env
