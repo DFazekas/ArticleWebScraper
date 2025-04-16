@@ -153,10 +153,10 @@ def append_articles(articles, access_token):
     # Send the append POST request.
     print("Appending data to Google Sheets ...")
     append_response = requests.post(
-        append_url, headers=sheets_headers, json=body, timeout=10)
+        append_url, headers=sheets_headers, json=body, timeout=10
+    )
     if append_response.status_code != 200:
-        error_msg = f"Error appending data to Google Sheets: {
-            append_response.text}"
+        error_msg = f"Error appending data to Google Sheets: {append_response.text}"
         raise RuntimeError(error_msg)
 
     print("Successfully appended data to Google Sheets.")
